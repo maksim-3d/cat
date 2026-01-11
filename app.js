@@ -1,8 +1,20 @@
 // Основные переменные
 let chart = null;
 let currentData = {};
-API_BASE_URL = "https://78.40.188.120:8927"
-console.log('API Base URL:', API_BASE_URL);
+let API_BASE_URL;
+
+// Автоматическое определение окружения
+if (window.location.hostname.includes('netlify.app')) {
+    // Netlify - используем прокси через /api/
+    API_BASE_URL = window.location.origin + '/api';
+    console.log('🌐 Netlify окружение, API URL:', API_BASE_URL);
+} else if (window.location.hostname === 'localhost') {
+    // Локальная разработка
+    API_BASE_URL = 'http://localhost:8927';
+} else {
+    // GitHub Pages или другие
+    API_BASE_URL = 'http://78.40.188.120:8927';
+}
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
