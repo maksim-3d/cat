@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 Kora Akyce - Статистика</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Мобильное меню -->
+    <div class="mobile-menu-btn" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Основной контейнер -->
+    <div class="container">
+        <!-- Боковое меню -->
+        <nav class="sidebar" id="sidebar">
+            <div class="logo">
+                <h1>🐱 Kora Akyce</h1>
+                <p class="subtitle">Статистика игры</p>
+            </div>
+            
+            <ul class="nav-menu">
+                <li><a href="#dashboard" class="active" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-bar"></i> Статистика
+                </a></li>
+                <li><a href="#top-players" onclick="showSection('top-players')">
+                    <i class="fas fa-crown"></i> Топ игроков
+                </a></li>
+                <li><a href="#matroskin-top" onclick="showSection('matroskin-top')">
+                    <i class="fas fa-cat"></i> Топ Матроскинов
+                </a></li>
+                <li><a href="#shop-stats" onclick="showSection('shop-stats')">
+                    <i class="fas fa-store"></i> Магазин
+                </a></li>
+                <li><a href="#prestige" onclick="showSection('prestige')">
+                    <i class="fas fa-bomb"></i> Престиж
+                </a></li>
+                <li><a href="#search" onclick="showSection('search')">
+                    <i class="fas fa-search"></i> Поиск игрока
+                </a></li>
+                <li><a href="#find-id" onclick="showSection('find-id')">
+                    <i class="fas fa-id-card"></i> Мой ID
+                </a></li>
+                <div id="tg-login" style="display: none; text-align: center; padding: 20px;">
+                    <button onclick="loginWithTelegram()" class="tg-button">
+                        <i class="fab fa-telegram"></i> Войти через Telegram
+                    </button>
+                </div>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="last-update">
+                    <i class="fas fa-sync"></i>
+                    <span id="last-update-text">Обновление...</span>
+                </div>
+                <div class="player-count">
+                    <i class="fas fa-users"></i>
+                    <span id="player-count">0 игроков</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Дашборд -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-bar"></i> Общая статистика</h2>
+                    <button class="btn-refresh" onclick="loadStats()">
+                        <i class="fas fa-redo"></i> Обновить
+                    </button>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon total-players">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-players">0</h3>
+                            <p>Всего игроков</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total-cats">
+                            <i class="fas fa-cat"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-cats">0</h3>
+                            <p>Всего кошек</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total-matroskin">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-matroskin">0</h3>
+                            <p>Матроскинов</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon total-attacks">
+                            <i class="fas fa-fist-raised"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-attacks">0</h3>
+                            <p>Всего атак</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-pie"></i> Распределение по престижу</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="prestigeChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Топ игроков -->
+            <section id="top-players" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-crown"></i> Топ игроков по кошкам</h2>
+                    <button class="btn-refresh" onclick="loadTopPlayers()">
+                        <i class="fas fa-redo"></i> Обновить
+                    </button>
+                </div>
+                
+                <div class="top-players-list" id="top-players-list">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </section>
+
+            <!-- Топ Матроскинов -->
+            <section id="matroskin-top" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-cat"></i> Топ Матроскинов</h2>
+                    <button class="btn-refresh" onclick="loadTopMatroskin()">
+                        <i class="fas fa-redo"></i> Обновить
+                    </button>
+                </div>
+                
+                <div class="matroskin-list" id="matroskin-list">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </section>
+
+            <!-- Статистика магазина -->
+            <section id="shop-stats" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-store"></i> Статистика магазина</h2>
+                    <button class="btn-refresh" onclick="loadShopStats()">
+                        <i class="fas fa-redo"></i> Обновить
+                    </button>
+                </div>
+                
+                <div class="shop-items-grid" id="shop-items-grid">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </section>
+
+            <!-- Престиж -->
+            <section id="prestige" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bomb"></i> Система престижа</h2>
+                    <button class="btn-refresh" onclick="loadPrestigeLevels()">
+                        <i class="fas fa-redo"></i> Обновить
+                    </button>
+                </div>
+                
+                <div class="prestige-levels" id="prestige-levels">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </section>
+
+            <!-- Поиск игрока -->
+            <section id="search" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-search"></i> Поиск игрока</h2>
+                </div>
+                
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="player-search" placeholder="Введите ID игрока" onkeyup="if(event.keyCode==13) searchPlayer()">
+                        <button onclick="searchPlayer()"><i class="fas fa-search"></i> Найти</button>
+                    </div>
+                    
+                    <div class="search-result" id="search-result">
+                        <div class="search-placeholder">
+                            <i class="fas fa-user-search"></i>
+                            <p>Введите ID игрока для поиска</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Поиск ID -->
+            <section id="find-id" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-id-card"></i> Мой ID игрока</h2>
+                </div>
+                
+                <div class="id-container">
+                    <div class="id-search">
+                        <h3><i class="fas fa-search"></i> Найти ID по нику</h3>
+                        <div class="search-box">
+                            <input type="text" id="nickname-for-id" placeholder="Введите ваш никнейм">
+                            <button onclick="findMyId()"><i class="fas fa-search"></i> Найти</button>
+                        </div>
+                        <div class="id-result" id="id-result">
+                            <p>Введите никнейм для поиска</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        function checkAuth() {
+            const savedId = localStorage.getItem('kora_user_id');
+            if (!savedId) {
+                event.preventDefault();
+                showNotification('Сначала найдите и введите свой ID в разделе "Мой ID"', 'error');
+                showSection('find-id');
+            }
+        }
+    </script>
+    <script src="tg-webapp.js"></script>
+    <script>
+        // Глобальная переменная для API URL
+        window.API_BASE_URL = 'http://78.40.188.120:8927';
+        // ИЛИ для Netlify:
+        // window.API_BASE_URL = 'https://ваш-сайт.netlify.app/api';
+    </script>
+</body>
+</html>
