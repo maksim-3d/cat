@@ -1,0 +1,12 @@
+[[redirects]]
+  from = "/api/*"
+  to = "http://78.40.188.120:8927/api/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
