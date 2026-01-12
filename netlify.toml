@@ -1,4 +1,11 @@
 [[redirects]]
+  from = "/api/events"
+  to = "http://78.40.188.120:8927/api/events"
+  status = 200
+  force = true
+  headers = {X-Accel-Buffering = "no"}
+
+[[redirects]]
   from = "/api/*"
   to = "http://78.40.188.120:8927/api/:splat"
   status = 200
@@ -8,5 +15,16 @@
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS, HEAD"
+    Access-Control-Allow-Headers = "Content-Type, Cache-Control, Last-Event-ID"
+    Access-Control-Expose-Headers = "Content-Type, Cache-Control, Last-Event-ID"
+    Cache-Control = "no-cache, no-store"
+    Connection = "keep-alive"
+
+[[headers]]
+  for = "/api/events"
+  [headers.values]
+    Content-Type = "text/event-stream"
+    Cache-Control = "no-cache"
+    Connection = "keep-alive"
+    X-Accel-Buffering = "no"

@@ -146,7 +146,129 @@ html, body {
     width: 100%;
     transition: width 5s linear;
 }
+/* Улучшенные стили для статуса SSE */
+.connection-status {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
 
+.connection-status.online {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.9) 0%, rgba(56, 161, 105, 0.9) 100%);
+    color: white;
+    animation: pulse-glow 2s infinite;
+}
+
+.connection-status.offline {
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.9) 0%, rgba(229, 62, 62, 0.9) 100%);
+    color: white;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+}
+
+/* Уведомления в реальном времени */
+.live-notification {
+    position: fixed;
+    top: 70px;
+    right: 15px;
+    width: 350px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+    z-index: 9998;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.live-notification.success {
+    border-left: 5px solid #48bb78;
+}
+
+.live-notification.error {
+    border-left: 5px solid #f56565;
+}
+
+.live-notification.info {
+    border-left: 5px solid #4299e1;
+}
+
+.live-notification-content {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.live-notification-content i {
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.live-notification-progress {
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    width: 100%;
+    animation: progressBar 5s linear;
+}
+
+@keyframes progressBar {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* Кнопка с индикатором реального времени */
+.btn-refresh.live {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    animation: pulse 2s infinite;
+}
+
+.btn-refresh.live::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 10px;
+    height: 10px;
+    background: #48bb78;
+    border-radius: 50%;
+    animation: pulse-dot 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
 /* Обновленные стили для кнопок */
 .btn-refresh.live {
     background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);

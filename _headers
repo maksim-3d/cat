@@ -1,0 +1,13 @@
+/api/events
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Cache-Control, Last-Event-ID
+  Access-Control-Expose-Headers: Content-Type, Cache-Control, Last-Event-ID
+  Cache-Control: no-cache
+  Connection: keep-alive
+  X-Accel-Buffering: no
+
+/api/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization
