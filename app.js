@@ -8,6 +8,7 @@ let eventSource = null;
 let isSSEConnected = false;
 let sseReconnectTimeout = null;
 let lastUpdateTime = null;
+let pingInterval = null;
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -31,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ========== SSE (Server-Sent Events) ==========
 
+// ========== SSE (Server-Sent Events) ==========
+
 // Подключение к SSE
 function connectSSE() {
     if (eventSource) {
@@ -38,7 +41,11 @@ function connectSSE() {
         console.log('📡 Закрыто старое SSE соединение');
     }
     
-    const sseUrl = `${window.API_BASE_URL}/api/events`;
+    // Используем прямой URL для SSE (не через Netlify для SSE)
+    const sseUrl = window.isTelegram 
+        ? 'http://78.40.188.120:8927/api/events' 
+        : `${window.API_BASE_URL}/api/events`;
+    
     console.log('📡 Подключение к SSE:', sseUrl);
     
     eventSource = new EventSource(sseUrl);
@@ -48,6 +55,12 @@ function connectSSE() {
         isSSEConnected = true;
         updateConnectionStatus();
         clearTimeout(sseReconnectTimeout);
+        startSSEPing();
+        // Сбрасываем таймеры переподключения
+        if (sseReconnectTimeout) {
+            clearTimeout(sseReconnectTimeout);
+            sseReconnectTimeout = null;
+        }
         
         // Показываем уведомление
         showNotification('Подключено к обновлениям в реальном времени', 'success');
@@ -64,27 +77,54 @@ function connectSSE() {
     };
     
     eventSource.onerror = function(error) {
-        console.log('❌ Ошибка SSE соединения');
+        console.log('❌ Ошибка SSE соединения', error);
         isSSEConnected = false;
         updateConnectionStatus();
+        stopSSEPing();
+        // Закрываем текущее соединение
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
         
-        // Переподключение через 5 секунд
+        // Переподключение через случайную задержку (2-10 секунд)
         if (sseReconnectTimeout) {
             clearTimeout(sseReconnectTimeout);
         }
         
+        const reconnectDelay = Math.random() * 8000 + 2000; // 2-10 секунд
+        console.log(`🔄 Попытка переподключения через ${Math.round(reconnectDelay/1000)}сек...`);
+        
         sseReconnectTimeout = setTimeout(() => {
             console.log('🔄 Попытка переподключения SSE...');
             connectSSE();
-        }, 5000);
-        
-        // Показываем предупреждение если долго нет соединения
-        setTimeout(() => {
-            if (!isSSEConnected) {
-                showNotification('Нет соединения с сервером. Данные могут быть неактуальны.', 'error');
-            }
-        }, 10000);
+        }, reconnectDelay);
     };
+}
+function startSSEPing() {
+    if (pingInterval) clearInterval(pingInterval);
+    
+    pingInterval = setInterval(() => {
+        if (eventSource && eventSource.readyState === EventSource.OPEN) {
+            // Отправляем ping на сервер
+            fetch(`${window.API_BASE_URL}/api/ping`, {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            }).catch(() => {
+                // Игнорируем ошибки ping
+            });
+        }
+    }, 25000); // Каждые 25 секунд
+}
+
+// Остановить ping
+function stopSSEPing() {
+    if (pingInterval) {
+        clearInterval(pingInterval);
+        pingInterval = null;
+    }
 }
 
 // Обработка SSE событий
@@ -94,6 +134,10 @@ function handleSSEEvent(data) {
     switch(data.type) {
         case 'connected':
             console.log('📡 SSE: Подключение установлено');
+            break;
+            
+        case 'ping':
+            console.log('❤️ SSE: Ping получен');
             break;
             
         case 'initial_stats':
