@@ -1,7 +1,13 @@
 // Основные переменные
 let chart = null;
 let currentData = {};
-let API_BASE_URL = "https://gleeful-starship-f36033.netlify.app"
+let API_BASE_URL = "https://gleeful-starship-f36033.netlify.app";
+
+// SSE (Server-Sent Events) переменные
+let eventSource = null;
+let isSSEConnected = false;
+let sseReconnectTimeout = null;
+let lastUpdateTime = null;
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -13,9 +19,347 @@ document.addEventListener('DOMContentLoaded', function() {
     // Загружаем начальные данные
     loadStats();
     
-    // Обновляем каждые 30 секунд
+    // Подключаем SSE для реального времени
+    connectSSE();
+    
+    // Обновляем каждые 30 секунд (резервный вариант)
     setInterval(loadStats, 30000);
+    
+    // Показываем статус подключения
+    updateConnectionStatus();
 });
+
+// ========== SSE (Server-Sent Events) ==========
+
+// Подключение к SSE
+function connectSSE() {
+    if (eventSource) {
+        eventSource.close();
+        console.log('📡 Закрыто старое SSE соединение');
+    }
+    
+    const sseUrl = `${window.API_BASE_URL}/api/events`;
+    console.log('📡 Подключение к SSE:', sseUrl);
+    
+    eventSource = new EventSource(sseUrl);
+    
+    eventSource.onopen = function() {
+        console.log('✅ SSE подключен успешно');
+        isSSEConnected = true;
+        updateConnectionStatus();
+        clearTimeout(sseReconnectTimeout);
+        
+        // Показываем уведомление
+        showNotification('Подключено к обновлениям в реальном времени', 'success');
+    };
+    
+    eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            console.log('📨 SSE сообщение:', data.type);
+            handleSSEEvent(data);
+        } catch (e) {
+            console.error('❌ Ошибка обработки SSE:', e);
+        }
+    };
+    
+    eventSource.onerror = function(error) {
+        console.log('❌ Ошибка SSE соединения');
+        isSSEConnected = false;
+        updateConnectionStatus();
+        
+        // Переподключение через 5 секунд
+        if (sseReconnectTimeout) {
+            clearTimeout(sseReconnectTimeout);
+        }
+        
+        sseReconnectTimeout = setTimeout(() => {
+            console.log('🔄 Попытка переподключения SSE...');
+            connectSSE();
+        }, 5000);
+        
+        // Показываем предупреждение если долго нет соединения
+        setTimeout(() => {
+            if (!isSSEConnected) {
+                showNotification('Нет соединения с сервером. Данные могут быть неактуальны.', 'error');
+            }
+        }, 10000);
+    };
+}
+
+// Обработка SSE событий
+function handleSSEEvent(data) {
+    lastUpdateTime = new Date();
+    
+    switch(data.type) {
+        case 'connected':
+            console.log('📡 SSE: Подключение установлено');
+            break;
+            
+        case 'initial_stats':
+            console.log('📊 SSE: Начальная статистика получена');
+            updateStatsFromSSE(data.stats);
+            break;
+            
+        case 'stats_update':
+            console.log('📈 SSE: Обновление статистики');
+            updateStatsFromSSE(data.data || data.stats);
+            showLiveUpdateIndicator();
+            break;
+            
+        case 'player_attack':
+            handlePlayerAttackEvent(data.data);
+            break;
+            
+        case 'player_purchase':
+            handlePlayerPurchaseEvent(data.data);
+            break;
+            
+        case 'player_slots':
+            handlePlayerSlotsEvent(data.data);
+            break;
+            
+        case 'player_prestige':
+            handlePlayerPrestigeEvent(data.data);
+            break;
+            
+        case 'player_nickname_change':
+            handlePlayerNicknameChangeEvent(data.data);
+            break;
+            
+        case 'player_collect':
+            handlePlayerCollectEvent(data.data);
+            break;
+            
+        case 'player_registered':
+            handlePlayerRegisteredEvent(data.data);
+            break;
+            
+        case 'system_broadcast':
+            handleSystemBroadcastEvent(data.data);
+            break;
+            
+        case 'test_event':
+            console.log('🧪 SSE: Тестовое событие:', data.data);
+            break;
+            
+        default:
+            console.log('📨 SSE: Неизвестное событие:', data);
+    }
+}
+
+// Обновление статистики из SSE
+function updateStatsFromSSE(stats) {
+    console.log('🔄 Обновление из SSE:', stats);
+    
+    // Обновляем счетчики на странице
+    if (stats.total_players !== undefined) {
+        document.getElementById('total-players').textContent = stats.total_players;
+        document.getElementById('player-count').textContent = `${stats.total_players} игроков`;
+    }
+    
+    if (stats.total_cats !== undefined) {
+        document.getElementById('total-cats').textContent = stats.total_cats.toLocaleString();
+    }
+    
+    if (stats.total_matroskin !== undefined) {
+        document.getElementById('total-matroskin').textContent = stats.total_matroskin;
+    }
+    
+    if (stats.total_attacks !== undefined) {
+        document.getElementById('total-attacks').textContent = stats.total_attacks;
+    }
+    
+    // Обновляем время последнего обновления
+    const now = new Date();
+    document.getElementById('last-update-text').textContent = 
+        `Обновлено: ${now.toLocaleTimeString()}`;
+    
+    // Если активна панель статистики, обновляем график
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection && activeSection.id === 'dashboard') {
+        // Загружаем обновленные данные для графика
+        loadStatsForChart();
+    }
+}
+
+// Обработка события атаки игрока
+function handlePlayerAttackEvent(data) {
+    console.log('⚔️ Атака игрока:', data.nickname, data.success ? 'успешна' : 'провалена');
+    
+    // Обновляем топ игроков если активен
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection) {
+        if (activeSection.id === 'top-players' || activeSection.id === 'matroskin-top') {
+            if (activeSection.id === 'top-players') {
+                loadTopPlayers();
+            } else {
+                loadTopMatroskin();
+            }
+        }
+    }
+    
+    // Показываем всплывающее уведомление
+    if (Math.random() < 0.3) { // 30% шанс показать уведомление
+        const message = data.success 
+            ? `${data.nickname} успешно атаковал и получил +${data.reward || '?'} кошек${data.got_matroskin ? ' и Матроскина!' : '!'}`
+            : `${data.nickname} провалил атаку${data.protection_used ? ' (защитился штанами)' : ''}`;
+        
+        showLiveNotification(message, data.success ? 'success' : 'error');
+    }
+}
+
+// Обработка события покупки
+function handlePlayerPurchaseEvent(data) {
+    console.log('🛒 Покупка игрока:', data.nickname, data.item_name);
+    
+    // Обновляем статистику магазина если активна
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection && activeSection.id === 'shop-stats') {
+        loadShopStats();
+    }
+}
+
+// Обработка события казино
+function handlePlayerSlotsEvent(data) {
+    console.log('🎰 Казино игрока:', data.nickname, data.win_amount > 0 ? 'выиграл' : 'проиграл');
+    
+    // Показываем уведомление о крупном выигрыше
+    if (data.win_amount > 100) {
+        showLiveNotification(`${data.nickname} сорвал куш в казино: +${data.win_amount} кошек! 🎉`, 'success');
+    }
+}
+
+// Обработка события престижа
+function handlePlayerPrestigeEvent(data) {
+    console.log('⭐ Престиж игрока:', data.nickname, data.old_level, '→', data.new_level);
+    
+    // Обновляем уровни престижа если активны
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection && activeSection.id === 'prestige') {
+        loadPrestigeLevels();
+    }
+    
+    // Показываем уведомление
+    showLiveNotification(`${data.nickname} достиг престижа уровня ${data.new_level}! 🎉`, 'success');
+}
+
+// Обработка события смены ника
+function handlePlayerNicknameChangeEvent(data) {
+    console.log('📝 Смена ника:', data.old_nickname, '→', data.new_nickname);
+}
+
+// Обработка события сбора производства
+function handlePlayerCollectEvent(data) {
+    console.log('🏭 Сбор производства:', data.nickname, data.collected);
+}
+
+// Обработка события регистрации
+function handlePlayerRegisteredEvent(data) {
+    console.log('👤 Новая регистрация:', data.nickname);
+    
+    // Обновляем статистику
+    updateStatsFromSSE({
+        total_players: data.total_players
+    });
+    
+    // Показываем приветствие
+    showLiveNotification(`Новый игрок: ${data.nickname}! Добро пожаловать! 👋`, 'success');
+}
+
+// Обработка системного сообщения
+function handleSystemBroadcastEvent(data) {
+    console.log('📢 Системное сообщение:', data.message);
+    
+    // Показываем системное уведомление
+    showLiveNotification(`📢 ${data.message}`, 'info');
+}
+
+// Показать индикатор живого обновления
+function showLiveUpdateIndicator() {
+    const statusElement = document.getElementById('connection-status');
+    if (statusElement) {
+        statusElement.classList.add('pulse');
+        setTimeout(() => {
+            statusElement.classList.remove('pulse');
+        }, 1000);
+    }
+}
+
+// Показать живое уведомление
+function showLiveNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `live-notification ${type}`;
+    notification.innerHTML = `
+        <div class="live-notification-content">
+            <i class="fas fa-${getNotificationIcon(type)}"></i>
+            <span>${message}</span>
+        </div>
+        <div class="live-notification-progress"></div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое удаление через 5 секунд
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+    
+    // Анимация прогресса
+    setTimeout(() => {
+        const progress = notification.querySelector('.live-notification-progress');
+        if (progress) {
+            progress.style.width = '0%';
+        }
+    }, 10);
+}
+
+function getNotificationIcon(type) {
+    switch(type) {
+        case 'success': return 'check-circle';
+        case 'error': return 'exclamation-triangle';
+        case 'info': return 'info-circle';
+        default: return 'bell';
+    }
+}
+
+// Обновить статус подключения
+function updateConnectionStatus() {
+    let statusElement = document.getElementById('connection-status');
+    
+    if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'connection-status';
+        statusElement.className = 'connection-status';
+        document.body.appendChild(statusElement);
+    }
+    
+    if (isSSEConnected) {
+        statusElement.innerHTML = '<i class="fas fa-wifi"></i> Онлайн';
+        statusElement.className = 'connection-status online';
+    } else {
+        statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i> Оффлайн';
+        statusElement.className = 'connection-status offline';
+    }
+}
+
+// Отправить тестовое событие
+function sendTestEvent() {
+    fetch(`${window.API_BASE_URL}/api/test/simple_save`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Тестовое событие отправлено:', data);
+        showNotification('Тестовое событие отправлено', 'success');
+    })
+    .catch(error => {
+        console.error('Ошибка отправки тестового события:', error);
+        showNotification('Ошибка отправки теста', 'error');
+    });
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ НАВИГАЦИИ ==========
 
 // Инициализация навигации
 function initNavigation() {
@@ -38,14 +382,57 @@ function initNavigation() {
         });
     });
     
-    // Обработчик для кнопки обновления
+    // Обработчик для кнопки обновления - ИСПРАВЛЕННЫЙ ВАРИАНТ
     document.querySelectorAll('.btn-refresh').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const sectionId = this.closest('.content-section').id;
-            loadSectionData(sectionId);
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sectionId = this.closest('.content-section')?.id;
+            console.log('Клик по кнопке обновления в секции:', sectionId);
+            
+            if (!sectionId) return;
+            
+            // Добавляем анимацию
+            this.classList.add('loading');
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.classList.add('fa-spin');
+            }
+            
+            // Вызываем соответствующую функцию
+            switch(sectionId) {
+                case 'dashboard':
+                    loadStats();
+                    break;
+                case 'top-players':
+                    loadTopPlayers();
+                    break;
+                case 'matroskin-top':
+                    loadTopMatroskin();
+                    break;
+                case 'shop-stats':
+                    loadShopStats();
+                    break;
+                case 'prestige':
+                    loadPrestigeLevels();
+                    break;
+                default:
+                    console.log('Неизвестная секция:', sectionId);
+            }
+            
+            // Убираем анимацию через 2 секунды
+            setTimeout(() => {
+                this.classList.remove('loading');
+                if (icon) {
+                    icon.classList.remove('fa-spin');
+                }
+            }, 2000);
         });
     });
 }
+
+// ========== ОСНОВНЫЕ ФУНКЦИИ ==========
 
 // Переключение мобильного меню
 function toggleMobileMenu() {
@@ -171,6 +558,32 @@ async function loadStats() {
     } catch (error) {
         console.error('Ошибка загрузки статистики:', error);
         showNotification('Ошибка загрузки данных', 'error');
+    }
+}
+
+// Загрузка статистики только для графика
+async function loadStatsForChart() {
+    try {
+        const playersResponse = await fetch(window.API_BASE_URL + '/api/top/players');
+        
+        if (!playersResponse.ok) {
+            throw new Error('Ошибка сети');
+        }
+        
+        const players = await playersResponse.json();
+        
+        // Создаем распределение по престижу
+        const prestigeData = {};
+        players.forEach(player => {
+            const level = player.prestige_level || player.prestige || 0;
+            prestigeData[level] = (prestigeData[level] || 0) + 1;
+        });
+        
+        // Обновляем график
+        updatePrestigeChart(prestigeData);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки данных для графика:', error);
     }
 }
 
@@ -658,7 +1071,7 @@ async function findMyId() {
     }
     
     try {
-        const response = await fetch(`/api/search/player?q=${encodeURIComponent(nickname)}`);
+        const response = await fetch(`${window.API_BASE_URL}/api/search/player?q=${encodeURIComponent(nickname)}`);
         if (!response.ok) throw new Error('Ошибка сети');
         
         const players = await response.json();
@@ -736,7 +1149,7 @@ function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.innerHTML = `
-        <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
+        <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : type === 'info' ? 'info-circle' : 'check-circle'}"></i>
         ${message}
     `;
     
@@ -748,7 +1161,8 @@ function showNotification(message, type = 'success') {
     }, 5000);
 }
 
-// Экспорт функций для глобального использования
+// ========== ЭКСПОРТ ФУНКЦИЙ ==========
+
 window.toggleMobileMenu = toggleMobileMenu;
 window.showSection = showSection;
 window.searchPlayer = searchPlayer;
@@ -768,3 +1182,5 @@ window.loginWithFoundId = loginWithFoundId;
 window.findMyId = findMyId;
 window.savePlayerId = savePlayerId;
 window.copyToClipboard = copyToClipboard;
+window.connectSSE = connectSSE;
+window.sendTestEvent = sendTestEvent;

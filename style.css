@@ -21,7 +21,164 @@ html, body {
     width: 100vw;
     overflow: hidden;
 }
+/* Статус подключения */
+.connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
 
+.connection-status.online {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.connection-status.offline {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+}
+
+/* Анимация мигания при обновлении */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+/* Стили для реального времени */
+.connection-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.connection-status.online {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.connection-status.offline {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+}
+
+/* Анимация пульсации при обновлении */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Живые уведомления */
+.live-notification {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 350px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 9998;
+    overflow: hidden;
+}
+
+.live-notification.success {
+    border-left: 4px solid #48bb78;
+}
+
+.live-notification.error {
+    border-left: 4px solid #f56565;
+}
+
+.live-notification.info {
+    border-left: 4px solid #4299e1;
+}
+
+.live-notification-content {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.live-notification-content i {
+    font-size: 20px;
+}
+
+.live-notification.success .live-notification-content i {
+    color: #48bb78;
+}
+
+.live-notification.error .live-notification-content i {
+    color: #f56565;
+}
+
+.live-notification.info .live-notification-content i {
+    color: #4299e1;
+}
+
+.live-notification-progress {
+    height: 3px;
+    background: linear-gradient(90deg, #4299e1 0%, #667eea 100%);
+    width: 100%;
+    transition: width 5s linear;
+}
+
+/* Обновленные стили для кнопок */
+.btn-refresh.live {
+    background: linear-gradient(135deg, #4299e1 0%, #667eea 100%);
+}
+
+.btn-refresh.live:hover {
+    background: linear-gradient(135deg, #3182ce 0%, #5a67d8 100%);
+}
+
+/* Индикатор обновления в реальном времени */
+.realtime-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 10px;
+    animation: pulse 2s infinite;
+}
+.updating {
+    animation: pulse 1s infinite;
+}
+
+/* Уведомления SSE */
+.notification.sse {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.notification.sse i {
+    animation: pulse 2s infinite;
+}
 /* Мобильное меню */
 .mobile-menu-btn {
     display: none;

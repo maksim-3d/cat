@@ -70,9 +70,9 @@
             <section id="dashboard" class="content-section active">
                 <div class="section-header">
                     <h2><i class="fas fa-chart-bar"></i> Общая статистика</h2>
-                    <button class="btn-refresh" onclick="loadStats()">
-                        <i class="fas fa-redo"></i> Обновить
-                    </button>
+<button class="btn-refresh" onclick="loadStats()">
+    <i class="fas fa-redo"></i> Обновить
+</button>
                 </div>
                 
                 <div class="stats-grid">
@@ -129,9 +129,9 @@
             <section id="top-players" class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-crown"></i> Топ игроков по кошкам</h2>
-                    <button class="btn-refresh" onclick="loadTopPlayers()">
-                        <i class="fas fa-redo"></i> Обновить
-                    </button>
+<button class="btn-refresh" onclick="loadTopPlayers()">
+    <i class="fas fa-redo"></i> Обновить
+</button>
                 </div>
                 
                 <div class="top-players-list" id="top-players-list">
@@ -143,9 +143,9 @@
             <section id="matroskin-top" class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-cat"></i> Топ Матроскинов</h2>
-                    <button class="btn-refresh" onclick="loadTopMatroskin()">
-                        <i class="fas fa-redo"></i> Обновить
-                    </button>
+<button class="btn-refresh" onclick="loadTopMatroskin()">
+    <i class="fas fa-redo"></i> Обновить
+</button>
                 </div>
                 
                 <div class="matroskin-list" id="matroskin-list">
@@ -157,9 +157,9 @@
             <section id="shop-stats" class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-store"></i> Статистика магазина</h2>
-                    <button class="btn-refresh" onclick="loadShopStats()">
-                        <i class="fas fa-redo"></i> Обновить
-                    </button>
+<button class="btn-refresh" onclick="loadShopStats()">
+    <i class="fas fa-redo"></i> Обновить
+</button>
                 </div>
                 
                 <div class="shop-items-grid" id="shop-items-grid">
@@ -171,9 +171,9 @@
             <section id="prestige" class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-bomb"></i> Система престижа</h2>
-                    <button class="btn-refresh" onclick="loadPrestigeLevels()">
-                        <i class="fas fa-redo"></i> Обновить
-                    </button>
+<button class="btn-refresh" onclick="loadPrestigeLevels()">
+    <i class="fas fa-redo"></i> Обновить
+</button>
                 </div>
                 
                 <div class="prestige-levels" id="prestige-levels">
@@ -237,10 +237,42 @@
             }
         }
     </script>
-    <script src="tg-webapp.js"></script>
+    <!-- После подключения стилей -->
     <script>
-        window.API_BASE_URL = 'https://gleeful-starship-f36033.netlify.app';
+        // Автоопределение среды
+        const isTelegram = window.Telegram?.WebApp !== undefined;
+        
+        if (isTelegram) {
+            document.body.classList.add('telegram-app');
+            window.API_BASE_URL = 'http://78.40.188.120:8927'; // Прямое подключение
+        } else {
+            window.API_BASE_URL = 'https://gleeful-starship-f36033.netlify.app'; // Через Netlify
+        }
+        
+        console.log('API Base URL:', window.API_BASE_URL);
+        console.log('Telegram Mode:', isTelegram);
+    </script>
+
+    <!-- Подключаем Telegram скрипт -->
+    <script src="tg-miniapp.js"></script>
+
+    <!-- Обработчик события Telegram -->
+    <script>
+        window.addEventListener('telegram-user-ready', (event) => {
+            console.log('Telegram user ready:', event.detail);
+            
+            // Автоматически показываем дашборд
+            if (typeof showSection === 'function') {
+                showSection('dashboard');
+                loadStats();
+            }
+            
+            // Скрываем кнопку входа
+            const tgLoginBtn = document.getElementById('tg-login');
+            if (tgLoginBtn) {
+                tgLoginBtn.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
-
