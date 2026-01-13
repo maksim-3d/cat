@@ -1,7 +1,7 @@
 // Основные переменные
 let chart = null;
 let currentData = {};
-let API_BASE_URL = "https://gleeful-starship-f36033.netlify.app";
+let API_BASE_URL = "78.40.188.120:8927";
 
 // SSE (Server-Sent Events) переменные
 let eventSource = null;
