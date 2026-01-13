@@ -105,7 +105,7 @@ function connectSSE() {
     }
     
     // Используем Netlify proxy
-    const sseUrl = `${window.API_BASE_URL}/api/events`;
+    const sseUrl = `${"78.40.188.120:8915"}/api/stats`;
     
     console.log('📡 Подключение к SSE:', sseUrl);
     
@@ -697,8 +697,8 @@ async function loadStats() {
     try {
         console.log('Загрузка статистики...');
         const [statsResponse, playersResponse] = await Promise.all([
-            fetch(window.API_BASE_URL + '/api/stats'),
-            fetch(window.API_BASE_URL + '/api/top/players')
+            fetch("http://78.40.188.120:8915" + '/api/stats'),
+            fetch("http://78.40.188.120:8927" + '/api/top/players')
         ]);
         
         if (!statsResponse.ok || !playersResponse.ok) {

@@ -241,13 +241,7 @@
     <script>
         // Автоопределение среды
         const isTelegram = window.Telegram?.WebApp !== undefined;
-        
-        if (isTelegram) {
-            document.body.classList.add('telegram-app');
-            window.API_BASE_URL = 'http://78.40.188.120:8927'; // Прямое подключение
-        } else {
-            window.API_BASE_URL = 'https://gleeful-starship-f36033.netlify.app'; // Через Netlify
-        }
+        window.API_BASE_URL = 'http://78.40.188.120:8927'; // Прямое подключение
         
         console.log('API Base URL:', window.API_BASE_URL);
         console.log('Telegram Mode:', isTelegram);
