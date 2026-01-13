@@ -105,7 +105,7 @@ function connectSSE() {
     }
     
     // Используем Netlify proxy
-    const sseUrl = `${"78.40.188.120:8915"}/api/stats`;
+    const sseUrl = "https://78.40.188.120:8915/api/stats";
     
     console.log('📡 Подключение к SSE:', sseUrl);
     
