@@ -1,7 +1,8 @@
 // Основные переменные
 let chart = null;
 let currentData = {};
-let API_BASE_URL = "78.40.188.120:8927";
+let API_STATS_URL = "http://78.40.188.120:8915";  // Для статистики
+let API_DATA_URL = "http://78.40.188.120:8927";    // Для данных игроков
 
 // SSE (Server-Sent Events) переменные
 let eventSource = null;
@@ -104,8 +105,8 @@ function connectSSE() {
         console.log('📡 Закрыто старое SSE соединение');
     }
     
-    // Используем Netlify proxy
-    const sseUrl = "https://78.40.188.120:8915/api/stats";
+    // SSE тоже с порта 8915
+    const sseUrl = API_STATS_URL + '/api/stats';
     
     console.log('📡 Подключение к SSE:', sseUrl);
     
@@ -697,8 +698,8 @@ async function loadStats() {
     try {
         console.log('Загрузка статистики...');
         const [statsResponse, playersResponse] = await Promise.all([
-            fetch("http://78.40.188.120:8915" + '/api/stats'),
-            fetch("http://78.40.188.120:8927" + '/api/top/players')
+            fetch(API_STATS_URL + '/api/stats'),           // С порта 8915
+            fetch(API_DATA_URL + '/api/top/players')       // С порта 8927
         ]);
         
         if (!statsResponse.ok || !playersResponse.ok) {
